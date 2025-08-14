@@ -8,7 +8,7 @@ export interface ValidationSchema {
 }
 
 export const validate = (schema: ValidationSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const validationOptions = {
       abortEarly: false,
       allowUnknown: true,
@@ -39,11 +39,12 @@ export const validate = (schema: ValidationSchema) => {
     }
 
     if (errors.length > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errors
       });
+      return;
     }
 
     next();

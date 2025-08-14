@@ -4,10 +4,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import timeEntryRoutes from './routes/timeEntries';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import connectDB from './config/database';
+import swaggerOptions from './config/swagger';
 
 // Load environment variables
 dotenv.config();
@@ -48,7 +51,50 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check endpoint
+// Swagger documentation setup
+const specs = swaggerJsdoc(swaggerOptions);
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: |
+ *       Check the health and status of the Timesheet Service.
+ *       Returns basic information about the service including:
+ *       - Service status
+ *       - Current timestamp
+ *       - Environment information
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Service is healthy and running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Timesheet Service is running"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Current server timestamp
+ *                   example: "2024-01-01T12:00:00.000Z"
+ *                 environment:
+ *                   type: string
+ *                   description: Current environment (development, production, etc.)
+ *                   example: "development"
+ *             example:
+ *               success: true
+ *               message: "Timesheet Service is running"
+ *               timestamp: "2024-01-01T12:00:00.000Z"
+ *               environment: "development"
+ */
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -57,6 +103,19 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Timesheet Service API Documentation',
+  customfavIcon: '/favicon.ico',
+  swaggerOptions: {
+    docExpansion: 'list',
+    filter: true,
+    showRequestHeaders: true,
+    tryItOutEnabled: true
+  }
+}));
 
 // API routes
 app.use('/api/time-entries', timeEntryRoutes);
