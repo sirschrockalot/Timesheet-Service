@@ -1,9 +1,14 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/timesheet-service';
+// Get MongoDB URI when function is called, not at module load time
+function getMongoUri() {
+  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/timesheet-service';
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  if (!MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable');
+  }
+  
+  return MONGODB_URI;
 }
 
 let cached: any = global.mongoose;
@@ -23,6 +28,7 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
+    const MONGODB_URI = getMongoUri();
     const opts = {
       bufferCommands: false,
     };

@@ -1,6 +1,6 @@
 import app from './app';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3007;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Timesheet Service running on port ${PORT}`);

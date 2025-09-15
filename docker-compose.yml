@@ -25,15 +25,15 @@ services:
     container_name: timesheet-service
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3007:3007"
     environment:
       # MongoDB Configuration
       MONGODB_URI: mongodb://admin:password123@mongodb:27017/timesheet-service?authSource=admin
       
       # Application Configuration
       NODE_ENV: production
-      PORT: 3001
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      PORT: 3007
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3007
       
       # Rate Limiting
       RATE_LIMIT_WINDOW_MS: 900000

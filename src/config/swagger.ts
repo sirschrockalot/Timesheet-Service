@@ -49,7 +49,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
+        url: 'http://localhost:3007',
         description: 'Development server'
       },
       {

@@ -13,11 +13,13 @@ import connectDB from './config/database';
 import swaggerOptions from './config/swagger';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: '.env' });
+
+// Environment variables loaded successfully
 
 const app = express();
 
-// Connect to MongoDB
+// Connect to MongoDB after environment variables are loaded
 connectDB();
 
 // Security middleware
