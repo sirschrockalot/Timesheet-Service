@@ -158,6 +158,32 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
   try {
     const updates = req.body;
     
+    // Get the existing time entry first
+    const existingEntry = await TimeEntry.findById(req.params.id);
+    
+    if (!existingEntry) {
+      return res.status(404).json({
+        success: false,
+        error: 'Time entry not found'
+      });
+    }
+    
+    // If weekStart is being updated, check for duplicates
+    if (updates.weekStart && new Date(updates.weekStart).getTime() !== existingEntry.weekStart.getTime()) {
+      const duplicateEntry = await TimeEntry.findOne({
+        userId: existingEntry.userId,
+        weekStart: new Date(updates.weekStart),
+        _id: { $ne: req.params.id } // Exclude the current entry
+      });
+      
+      if (duplicateEntry) {
+        return res.status(400).json({
+          success: false,
+          error: 'Time entry already exists for this week'
+        });
+      }
+    }
+    
     // Check if updating status to submitted
     if (updates.status === 'submitted' && !updates.submittedAt) {
       updates.submittedAt = new Date();
@@ -168,13 +194,6 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
       { ...updates },
       { new: true, runValidators: true }
     ).select('-__v');
-    
-    if (!updatedTimeEntry) {
-      return res.status(404).json({
-        success: false,
-        error: 'Time entry not found'
-      });
-    }
     
     return res.json({
       success: true,
@@ -201,6 +220,14 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
       });
     }
     
+    // Handle duplicate key error (from unique index)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Time entry already exists for this week'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: 'Failed to update time entry'
@@ -210,7 +237,8 @@ export const updateTimeEntry = async (req: Request, res: Response) => {
 
 export const deleteTimeEntry = async (req: Request, res: Response) => {
   try {
-    const timeEntry = await TimeEntry.findByIdAndDelete(req.params.id);
+    // First, find the time entry to check its status
+    const timeEntry = await TimeEntry.findById(req.params.id);
     
     if (!timeEntry) {
       return res.status(404).json({
@@ -218,6 +246,17 @@ export const deleteTimeEntry = async (req: Request, res: Response) => {
         error: 'Time entry not found'
       });
     }
+    
+    // Only allow deletion of draft timesheets
+    if (timeEntry.status !== 'draft') {
+      return res.status(403).json({
+        success: false,
+        error: `Cannot delete timesheet with status '${timeEntry.status}'. Only draft timesheets can be deleted.`
+      });
+    }
+    
+    // Delete the time entry
+    await TimeEntry.findByIdAndDelete(req.params.id);
     
     return res.json({
       success: true,
